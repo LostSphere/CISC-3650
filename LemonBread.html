@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>To-Do List</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f6c5d4, #9ad3bc);
+        }
+
+        .vh-100 {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .todo-container {
+            max-width: 600px;
+            width: 100%;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .card {
+            border: none;
+            border-radius: .75rem;
+            background-color: #eff1f2;
+        }
+
+        .list-group-item {
+            border: none;
+            background-color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .form-check {
+            margin-bottom: 0;
+        }
+
+        .subtask-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .subtask-actions {
+            display: flex;
+        }
+
+        .priority-high {
+            color: #d9534f;
+        }
+
+        .priority-medium {
+            color: #f0ad4e;
+        }
+
+        .priority-low {
+            color: #5bc0de;
+        }
+
+        .completed .task-content,
+        .completed .subtask-content {
+            text-decoration: line-through;
+        }
+
+        .completed .task-actions,
+        .completed .subtask-actions {
+            display: none;
+        }
+
+        @keyframes celebrate {
+            0% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-20px);
+            }
+
+            100% {
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes confetti {
+            0% {
+                transform: translateY(0) rotate(0);
+            }
+
+            25% {
+                transform: translateY(-20px) rotate(20deg);
+            }
+
+            50% {
+                transform: translateY(0) rotate(0);
+            }
+
+            75% {
+                transform: translateY(-20px) rotate(-20deg);
+            }
+
+            100% {
+                transform: translateY(0) rotate(0);
+            }
+        }
+
+        .celebrate {
+            animation: celebrate 0.5s ease;
+        }
+
+        .confetti {
+            animation: confetti 0.5s ease-out;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+
+    <section class="vh-100">
+        <div class="container py-5 h-100 todo-container">
+            <div class="card" id="list1">
+                <div class="card-body py-4 px-4 px-md-5">
+
+                    <h1 class="text-center mt-3 mb-4 pb-3 text-primary">
+                        <i class="fas fa-check-square me-1"></i>
+                        <u>To Do List</u>
+                    </h1>
+
+                    <div class="pb-2">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex flex-row align-items-center">
+                                    <input type="text" class="form-control form-control-lg"
+                                        id="newTaskInput" placeholder="Add new...">
+                                    <input type="date" class="form-control form-control-lg mx-3"
+                                        id="dueDateInput">
+                                    <select class="form-control form-control-lg" id="prioritySelect">
+                                        <option value="high">High Priority</option>
+                                        <option value="medium">Medium Priority</option>
+                                        <option value="low">Low Priority</option>
+                                    </select>
+                                    <div>
+                                        <button type="button" class="btn btn-primary"
+                                            onclick="addTask()">Add</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <h5 class="mb-3">Active Tasks</h5>
+                    <ul id="taskList" class="list-group">
+                        <!-- Active tasks will be dynamically added here -->
+                    </ul>
+
+                    <hr class="my-4">
+
+                    <h5 class="mb-3">Completed Tasks</h5>
+                    <ul id="completedTaskList" class="list-group">
+                        <!-- Completed tasks will be dynamically added here -->
+                    </ul>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        function addTask() {
+            var newTask = $("#newTaskInput").val();
+            var dueDate = $("#dueDateInput").val();
+            var priority = $("#prioritySelect").val();
+
+            if (newTask.trim() !== "") {
+                var taskHtml = `
+                    <li class="list-group-item">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="form-check">
+                                <input class="form-check-input me-0" type="checkbox" value="" aria-label="..."
+                                    onclick="toggleCompletion(this)" />
+                            </div>
+                            <div class="task-content">
+                                <p class="lead fw-normal mb-0 ${getPriorityClass(priority)}">${newTask}</p>
+                                <div class="text-muted small"><i class="fas fa-info-circle me-2"></i>${dueDate}</div>
+                            </div>
+                            <div class="task-actions">
+                                <button type="button" class="btn btn-danger" onclick="deleteTask(this)">Delete</button>
+                            </div>
+                        </div>
+                        <ul class="list-group subtask-list"></ul>
+                        <div class="d-flex mt-2">
+                            <input type="text" class="form-control form-control-sm"
+                                placeholder="Add subtask..." onkeydown="addSubtask(event, this)">
+                            <button type="button" class="btn btn-primary btn-sm ms-2"
+                                onclick="addSubtaskBtn(this)">Add</button>
+                        </div>
+                    </li>`;
+
+                $("#taskList").append(taskHtml);
+                $("#newTaskInput").val(""); // Clear input after adding task
+                $("#dueDateInput").val(""); // Clear due date input after adding task
+
+                // Initialize Bootstrap tooltips
+                $('[data-toggle="tooltip"]').tooltip();
+
+                // Add celebrate class to the newly added task for animation
+                $("#taskList li:last-child").addClass("celebrate");
+            }
+        }
+
+        function addSubtaskBtn(button) {
+            var subtaskInput = $(button).prev('.form-control');
+            var subtaskText = subtaskInput.val();
+            var taskId = $(button).closest('li').index();
+
+            if (subtaskText.trim() !== "") {
+                var subtaskHtml = `
+                    <li class="list-group-item subtask-item">
+                        <div class="form-check">
+                            <input class="form-check-input me-0" type="checkbox" value="" aria-label="..."
+                                onclick="toggleSubtaskCompletion(this, ${taskId})" />
+                        </div>
+                        <div class="subtask-content">
+                            <p class="lead fw-normal mb-0">${subtaskText}</p>
+                        </div>
+                        <div class="subtask-actions">
+                            <button type="button" class="btn btn-danger btn-sm"
+                                onclick="deleteSubtask(this, ${taskId})">Delete</button>
+                        </div>
+                    </li>`;
+
+                $(button).closest('li').find('.subtask-list').append(subtaskHtml);
+                subtaskInput.val(""); // Clear subtask input after adding subtask
+            }
+        }
+
+        function addSubtask(event, input) {
+            if (event.key === "Enter") {
+                addSubtaskBtn($(input).next('.btn'));
+            }
+        }
+
+        function deleteSubtask(button, taskId) {
+            var subtaskItem = $(button).closest('li');
+            subtaskItem.remove();
+            checkMainTaskCompletion(taskId);
+        }
+
+        function toggleSubtaskCompletion(checkbox, taskId) {
+            var subtaskItem = $(checkbox).closest('li');
+            var subtaskContent = subtaskItem.find('.subtask-content');
+
+            subtaskContent.toggleClass('completed');
+
+            checkMainTaskCompletion(taskId);
+        }
+
+        function checkMainTaskCompletion(taskId) {
+            var mainTaskItem = $("#taskList li").eq(taskId);
+            var subtasks = mainTaskItem.find('.subtask-list .subtask-item');
+            var completedSubtasks = subtasks.filter('.completed');
+
+            if (subtasks.length === completedSubtasks.length) {
+                mainTaskItem.find('.form-check-input').prop('checked', true);
+            } else {
+                mainTaskItem.find('.form-check-input').prop('checked', false);
+            }
+        }
+
+        function deleteTask(button) {
+            var taskItem = $(button).closest('li');
+            taskItem.remove();
+        }
+
+        function toggleCompletion(checkbox) {
+            var taskItem = $(checkbox).closest('li');
+            var taskContent = taskItem.find('.task-content');
+
+            taskContent.toggleClass('completed');
+
+            if (taskContent.hasClass('completed')) {
+                taskItem.appendTo("#completedTaskList");
+                taskItem.addClass("celebrate confetti");
+            } else {
+                taskItem.removeClass("celebrate confetti");
+            }
+        }
+
+        function getPriorityClass(priority) {
+            switch (priority) {
+                case 'high':
+                    return 'priority-high';
+                case 'medium':
+                    return 'priority-medium';
+                case 'low':
+                    return 'priority-low';
+                default:
+                    return '';
+            }
+        }
+    </script>
+
+</body>
+
+</html>
+
+
